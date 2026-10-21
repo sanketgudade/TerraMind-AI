@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TerraMind AI | Wildfire Intelligence</title>
+
+    <!-- Leaflet map library -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #151f30;
+            --panel-hover: #1b2940;
+            --border: #29364a;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --orange: #f97316;
+            --green: #4ade80;
+            --red: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        button,
+        select,
+        input {
+            font: inherit;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+.brand-icon {
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 26px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .brand-icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #3b2115;
+            font-size: 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(24px, 4vw, 34px);
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: 8px 0 0;
+            line-height: 1.6;
+        }
+
+        .live-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--green);
+            font-size: 13px;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            background: var(--panel);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .section-heading {
+            margin: 30px 0 15px;
+            font-size: 19px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            min-width: 0;
+            padding: 21px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .metric-value {
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-top: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .metric-note {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 9px;
+        }
+
+        .accent-orange {
+            color: #fb923c;
+        }
+
+        .accent-red {
+            color: #f87171;
+        }
+
+        .accent-blue {
+            color: #60a5fa;
+        }
+
+        .accent-green {
+            color: #4ade80;
+        }
+
+        .panel {
+            margin-top: 22px;
+            padding: 22px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        h3 {
+            font-size: 15px;
+            margin: 0 0 15px;
+        }
+
+        .panel-description {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 140px;
+        }
+
+        .filter-group label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        select,
+        input[type="date"] {
+            width: 100%;
+            color: var(--text);
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 11px;
+            outline: none;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--orange);
+        }
+
+        .button {
+            border: 0;
+            padding: 11px 16px;
+            border-radius: 8px;
+            background: var(--orange);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .button:hover {
+            background: #ea580c;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .button-secondary {
+            background: #26364d;
+        }
+
+        .button-secondary:hover {
+            background: #344760;
+        }
+
+        .status-message {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 14px 0 0;
+        }
+
+        .status-error {
+            color: var(--red);
+        }
+
+        #fireMap {
+            width: 100%;
+            height: 540px;
+            border-radius: 12px;
+            background: #0b1220;
+            z-index: 1;
+        }
+
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .daily-list {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .daily-row {
+            display: grid;
+            grid-template-columns: 100px minmax(30px, 1fr) 80px;
+            gap: 12px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .daily-date {
+            color: #cbd5e1;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 9px;
+            background: #263247;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f97316, #ef4444);
+            border-radius: 20px;
+            transition: width 0.3s;
+        }
+
+        .daily-count {
+            text-align: right;
+            color: #e5e7eb;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .distribution-row {
+            display: grid;
+            grid-template-columns: 85px 1fr 65px;
+            gap: 10px;
+            align-items: center;
+            margin: 16px 0;
+            font-size: 12px;
+        }
+
+        .distribution-label {
+            color: #cbd5e1;
+        }
+
+        .distribution-count {
+            text-align: right;
+            color: #e5e7eb;
+        }
+
+        .footer {
+            margin-top: 25px;
+            padding: 20px 0 5px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+            border-top: 1px solid var(--border);
+        }
+
+        .leaflet-popup-content-wrapper,
+        .leaflet-popup-tip {
+            background: #151f30;
+            color: #e5e7eb;
+        }
+
+        .leaflet-popup-content {
+            line-height: 1.8;
+            margin: 13px 16px;
+        }
+
+        .popup-title {
+            font-weight: 700;
+            color: #fb923c;
+            margin-bottom: 5px;
+        }
+
+        .empty-message {
+            color: var(--muted);
+            font-size: 13px;
+            padding: 14px 0;
+        }
+
+        .main-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 0 24px;
+            padding: 10px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .main-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 16px;
+            color: var(--muted);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background .2s, color .2s;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: #fff;
+            background: #3b2115;
+        }
+
+        @media (max-width: 1000px) {
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 16px;
+            }
+
+            .cards,
+            .distribution-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel,
+            .card {
+                padding: 16px;
+            }
+
+            #fireMap {
+                height: 400px;
+            }
+
+            .daily-row {
+                grid-template-columns: 83px minmax(20px, 1fr) 65px;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <header class="header">
+        <div class="brand">
+            <div class="brand-icon">
+                <img src="{{ url_for('static', filename='LOGO.png') }}"
+                     alt="TerraMind AI Logo">
+            </div>
+
+            <div>
+                <h1>TerraMind AI</h1>
+                <p class="subtitle">
+                    Wildfire Intelligence &amp; Satellite Fire Detection
+                </p>
+            </div>
+        </div>
+        <div class="live-status">
+            <span class="dot"></span>
+            Flask dashboard
+        </div>
+    </header>
+
+    
+<nav class="main-nav" aria-label="Main navigation">
+    <a href="/">▦ Overview</a>
+        <a href="/clustering">✣ AI Clustering</a>
+        <a href="/activity">⏲ Historical Activity</a>
+         <a href="/classifier">֍AI Classifier</a>
+</nav>
+
+    {% if data_error %}
+    <section class="panel">
+        <h2 class="status-error">Dataset loading error</h2>
+        <p class="status-message">{{ data_error }}</p>
+        <p class="status-message">
+            Check the CSV files in data/raw/firms and restart the Flask server.
+        </p>
+    </section>
+    {% else %}
+
+    <section>
+        <h2 class="section-heading">Detection overview</h2>
+
+        <div class="cards">
+            <article class="card">
+                <div class="metric-label">Satellite detections</div>
+                <div class="metric-value accent-orange" id="detections">
+                    Loading...
+                </div>
+                <div class="metric-note">Records matching current filters</div>
+            </article>
+
+            <article class="card">
+                <div class="metric-label">High-confidence detections</div>
+                <div class="metric-value accent-red" id="highConfidence">
+                    Loading...
+                </div>
+                <div class="metric-note">High confidence within selection</div>
+            </article>
+
+            <article class="card">
+                <div class="metric-label">Mean Fire Radiative Power</div>
+                <div class="metric-value accent-blue" id="meanFrp">
+                    Loading...
+                </div>
+                <div class="metric-note">Megawatts (MW)</div>
+            </article>
+
+            <article class="card">
+                <div class="metric-label">Median Fire Radiative Power</div>
+                <div class="metric-value accent-green" id="medianFrp">
+                    Loading...
+                </div>
+                <div class="metric-note">Megawatts (MW)</div>
+            </article>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Detection filters</h2>
+                <p class="panel-description">
+                    Filter the dataset and update the statistics, map, and charts.
+                </p>
+            </div>
+
+            <button class="button button-secondary" id="resetButton" type="button">
+                Reset filters
+            </button>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="startDate">Start date</label>
+                <input
+                    id="startDate"
+                    type="date"
+                    value="{{ min_date }}"
+                    min="{{ min_date }}"
+                    max="{{ max_date }}"
+                >
+            </div>
+
+            <div class="filter-group">
+                <label for="endDate">End date</label>
+                <input
+                    id="endDate"
+                    type="date"
+                    value="{{ max_date }}"
+                    min="{{ min_date }}"
+                    max="{{ max_date }}"
+                >
+            </div>
+
+            <div class="filter-group">
+                <label for="confidence">Confidence</label>
+                <select id="confidence">
+                    <option value="all">All confidence levels</option>
+                    <option value="h">High</option>
+                    <option value="n">Nominal</option>
+                    <option value="l">Low</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="daynight">Observation time</label>
+                <select id="daynight">
+                    <option value="all">Day and night</option>
+                    <option value="D">Day</option>
+                    <option value="N">Night</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="source">Dataset source</label>
+                <select id="source">
+                    <option value="all">All data</option>
+                    <option value="archive">Archive</option>
+                    <option value="nrt">Near-real-time</option>
+                </select>
+            </div>
+
+            <button class="button" id="refreshButton" type="button">
+                Apply filters
+            </button>
+        </div>
+
+        <p class="status-message" id="status" role="status" aria-live="polite">
+            Loading dataset...
+        </p>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>India satellite hotspot map</h2>
+                <p class="panel-description">
+                    Each circle represents a geographic grid cell containing
+                    satellite detections, not an individual fire perimeter.
+                </p>
+            </div>
+        </div>
+
+        <div id="fireMap" aria-label="Interactive satellite hotspot map"></div>
+
+        <div class="map-legend">
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#22c55e"></span>
+                Lower FRP
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#f97316"></span>
+                Moderate FRP
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#ef4444"></span>
+                High FRP
+            </div>
+        </div>
+
+        <p class="status-message" id="mapStatus" role="status" aria-live="polite">
+            Preparing map...
+        </p>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Daily detection trend</h2>
+                <p class="panel-description">
+                    Latest 14 dates in the filtered dataset.
+                </p>
+            </div>
+        </div>
+
+        <div id="dailyChart" class="daily-list">
+            <p class="empty-message">Loading daily detections...</p>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Detection distribution</h2>
+                <p class="panel-description">
+                    Confidence categories and day/night observation counts.
+                </p>
+            </div>
+        </div>
+
+        <div class="distribution-grid">
+            <div>
+                <h3>Confidence levels</h3>
+                <div id="confidenceChart">
+                    <p class="empty-message">Loading...</p>
+                </div>
+            </div>
+
+            <div>
+                <h3>Day versus night</h3>
+                <div id="daynightChart">
+                    <p class="empty-message">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <strong>Data source:</strong> NASA FIRMS Suomi-NPP VIIRS active-fire
+        detections, Collection 2.<br>
+        These are satellite detection records, not confirmed wildfire incident
+        reports. Fire Radiative Power (FRP) is not a direct measurement of
+        burned area or future fire risk.<br>
+        Map tiles © OpenStreetMap contributors. Internet access is required
+        for the map tiles and Leaflet CDN.
+    </footer>
+
+    {% endif %}
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+"use strict";
+
+const DATA_ERROR = {{ data_error | tojson }};
+
+let fireMap = null;
+let fireLayer = null;
+let requestInProgress = false;
+
+const $ = (id) => document.getElementById(id);
+
+function formatNumber(value) {
+    return Number(value || 0).toLocaleString("en-IN");
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString + "T00:00:00");
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[character]);
+}
+
+function initializeFireMap() {
+    if (fireMap) {
+        return;
+    }
+
+    if (typeof L === "undefined") {
+        throw new Error(
+            "Leaflet could not load. Check your internet connection or CDN access."
+        );
+    }
+
+    fireMap = L.map("fireMap").setView([22.5, 79], 4);
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            attribution: "&copy; OpenStreetMap contributors",
+            maxZoom: 18
+        }
+    ).addTo(fireMap);
+
+    fireLayer = L.layerGroup().addTo(fireMap);
+}
+
+function buildQuery() {
+    const start = $("startDate").value;
+    const end = $("endDate").value;
+
+    if (start && end && start > end) {
+        throw new Error("Start date cannot be later than end date.");
+    }
+
+    const params = new URLSearchParams({
+        confidence: $("confidence").value,
+        daynight: $("daynight").value,
+        source: $("source").value
+    });
+
+    if (start) params.set("start", start);
+    if (end) params.set("end", end);
+
+    return params;
+}
+
+async function fetchSummary() {
+    const params = buildQuery();
+
+    const response = await fetch(`/api/summary?${params.toString()}`);
+
+    if (!response.ok) {
+        let message = `Request failed with HTTP ${response.status}`;
+
+        try {
+            const body = await response.json();
+            if (body.error) message = body.error;
+        } catch (_) {
+            // Keep the HTTP error message if the response is not JSON.
+        }
+
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+function updateMetricCards(data) {
+    $("detections").textContent = formatNumber(data.detections);
+    $("highConfidence").textContent = formatNumber(data.high_confidence);
+    $("meanFrp").textContent = `${Number(data.mean_frp).toFixed(2)} MW`;
+    $("medianFrp").textContent = `${Number(data.median_frp).toFixed(2)} MW`;
+}
+
+function updateDailyChart(daily) {
+    const container = $("dailyChart");
+    container.replaceChildren();
+
+    const recent = daily.slice(-14);
+
+    if (!recent.length) {
+        container.innerHTML =
+            '<p class="empty-message">No detections match these filters.</p>';
+        return;
+    }
+
+    const maxCount = Math.max(...recent.map((item) => item.count), 1);
+
+    for (const item of recent) {
+        const row = document.createElement("div");
+        row.className = "daily-row";
+
+        const date = document.createElement("span");
+        date.className = "daily-date";
+        date.textContent = formatDate(item.date);
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${(item.count / maxCount) * 100}%`;
+        fill.title = `${formatNumber(item.count)} detections`;
+
+        track.appendChild(fill);
+
+        const count = document.createElement("span");
+        count.className = "daily-count";
+        count.textContent = formatNumber(item.count);
+
+        row.append(date, track, count);
+        container.appendChild(row);
+    }
+}
+
+function updateDistributionChart(containerId, items, colors) {
+    const container = $(containerId);
+    container.replaceChildren();
+
+    const total = items.reduce((sum, item) => sum + item.count, 0);
+
+    if (!total) {
+        container.innerHTML =
+            '<p class="empty-message">No matching records.</p>';
+        return;
+    }
+
+    items.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "distribution-row";
+
+        const label = document.createElement("span");
+        label.className = "distribution-label";
+
+        const labels = {
+            h: "High",
+            n: "Nominal",
+            l: "Low",
+            D: "Day",
+            N: "Night"
+        };
+
+        label.textContent = labels[item.label] || item.label;
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.background = colors[index % colors.length];
+        fill.style.width = `${(item.count / total) * 100}%`;
+        fill.title = `${formatNumber(item.count)} detections`;
+
+        track.appendChild(fill);
+
+        const count = document.createElement("span");
+        count.className = "distribution-count";
+        count.textContent = formatNumber(item.count);
+
+        row.append(label, track, count);
+        container.appendChild(row);
+    });
+}
+
+function updateFireMap(cells) {
+    initializeFireMap();
+    fireLayer.clearLayers();
+
+    const bounds = [];
+
+    for (const cell of cells) {
+        const frp = Number(cell.mean_frp || 0);
+
+        const color =
+            frp >= 50 ? "#ef4444" :
+            frp >= 10 ? "#f97316" :
+            "#22c55e";
+
+        const radius = Math.min(
+            16,
+            3 + Math.log2(cell.count + 1) * 1.5
+        );
+
+        const marker = L.circleMarker(
+            [cell.lat, cell.lon],
+            {
+                radius,
+                color,
+                fillColor: color,
+                fillOpacity: 0.78,
+                weight: 1
+            }
+        );
+
+        const popup = `
+            <div class="popup-title">Aggregated hotspot cell</div>
+            <div>Latitude: ${escapeHTML(cell.lat)}</div>
+            <div>Longitude: ${escapeHTML(cell.lon)}</div>
+            <div>Detections: ${formatNumber(cell.count)}</div>
+            <div>Mean FRP: ${Number(cell.mean_frp).toFixed(2)} MW</div>
+            <div style="font-size:11px;color:#9ca3af">
+                Rounded 0.1-degree grid cell
+            </div>
+        `;
+
+        marker.bindPopup(popup);
+        marker.addTo(fireLayer);
+
+        bounds.push([cell.lat, cell.lon]);
+    }
+
+    if (bounds.length > 0) {
+        fireMap.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: 6
+        });
+    } else {
+        fireMap.setView([22.5, 79], 4);
+    }
+
+    $("mapStatus").textContent =
+        `${formatNumber(cells.length)} aggregated grid cells displayed.`;
+
+    setTimeout(() => fireMap.invalidateSize(), 100);
+}
+
+async function loadDashboard() {
+    if (requestInProgress) return;
+
+    requestInProgress = true;
+
+    const button = $("refreshButton");
+    button.disabled = true;
+    button.textContent = "Loading...";
+
+    $("status").classList.remove("status-error");
+    $("status").textContent = "Fetching filtered satellite data...";
+    $("mapStatus").textContent = "Updating map...";
+
+    try {
+        const data = await fetchSummary();
+
+        updateMetricCards(data);
+        updateDailyChart(data.daily || []);
+
+        updateDistributionChart(
+            "confidenceChart",
+            data.confidence || [],
+            ["#ef4444", "#f97316", "#60a5fa"]
+        );
+
+        updateDistributionChart(
+            "daynightChart",
+            data.daynight || [],
+            ["#fbbf24", "#818cf8"]
+        );
+
+        updateFireMap(data.cells || []);
+
+        $("status").textContent =
+            `Dashboard updated successfully. ${formatNumber(data.detections)} detections match your filters.`;
+    } catch (error) {
+        console.error("Dashboard error:", error);
+
+        $("status").textContent = `Error: ${error.message}`;
+        $("status").classList.add("status-error");
+
+        $("mapStatus").textContent =
+            `Map update failed: ${error.message}`;
+        $("mapStatus").classList.add("status-error");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Apply filters";
+        requestInProgress = false;
+    }
+}
+
+function resetFilters() {
+    $("startDate").value = {{ min_date | tojson }};
+    $("endDate").value = {{ max_date | tojson }};
+    $("confidence").value = "all";
+    $("daynight").value = "all";
+    $("source").value = "all";
+
+    loadDashboard();
+}
+
+if (!DATA_ERROR) {
+    $("refreshButton").addEventListener("click", loadDashboard);
+    $("resetButton").addEventListener("click", resetFilters);
+
+    $("confidence").addEventListener("change", loadDashboard);
+    $("daynight").addEventListener("change", loadDashboard);
+    $("source").addEventListener("change", loadDashboard);
+
+    $("startDate").addEventListener("change", loadDashboard);
+    $("endDate").addEventListener("change", loadDashboard);
+
+    loadDashboard();
+}
+</script>
+</body>
+</html>

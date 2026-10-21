@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraMind AI | Historical Fire Activity</title>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #151f30;
+            --border: #29364a;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --green: #22c55e;
+            --orange: #f97316;
+            --red: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 28px;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-logo {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+
+        .container {
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        h1 { margin: 0; font-size: clamp(25px, 4vw, 34px); }
+        h2 { margin: 0; font-size: 19px; }
+        h3 { font-size: 15px; margin: 0 0 15px; }
+
+        .subtitle, .description, .muted {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .subtitle { margin: 7px 0 0; }
+        .description { font-size: 13px; margin: 8px 0 0; }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            margin-bottom: 24px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            padding: 11px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        nav a:hover, nav a.active {
+            color: white;
+            background: #3b2115;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card, .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .card { padding: 20px; min-width: 0; }
+        .panel { padding: 22px; margin-top: 20px; }
+
+        .metric-label { color: var(--muted); font-size: 13px; }
+        .metric-value {
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 700;
+            margin-top: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .green { color: var(--green); }
+        .orange { color: var(--orange); }
+        .red { color: var(--red); }
+        .blue { color: #60a5fa; }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 13px;
+            margin-top: 18px;
+        }
+
+        .filter {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 145px;
+            flex: 1;
+        }
+
+        label { font-size: 12px; color: var(--muted); }
+
+        input, select, button {
+            font: inherit;
+            padding: 11px;
+            border-radius: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #0b1220;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        button {
+            background: var(--orange);
+            color: white;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:disabled { opacity: .6; cursor: wait; }
+
+        .secondary { background: #26364d; }
+
+        #activityMap {
+            width: 100%;
+            height: 560px;
+            border-radius: 11px;
+            background: #0b1220;
+            margin-top: 18px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .legend span {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+
+        .error { color: #f87171; }
+
+        .table-wrap { overflow-x: auto; margin-top: 15px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 13px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        th { color: var(--muted); font-weight: 600; }
+
+        tbody tr:hover { background: #1b2940; }
+
+        .level {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .level-high { color: #fca5a5; background: #451a1a; }
+        .level-moderate { color: #fdba74; background: #431f0b; }
+        .level-low { color: #86efac; background: #123321; }
+
+        .footer {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #151f30;
+            color: #e5e7eb;
+        }
+
+        .leaflet-popup-content { line-height: 1.8; }
+
+        .table-controls {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .table-controls .filter {
+            min-width: 220px;
+        }
+
+        #tableSearch {
+            min-width: 220px;
+        }
+
+        #exportButton {
+            align-self: end;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 950px) {
+            .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 14px; }
+            .cards { grid-template-columns: 1fr; }
+            .panel, .card { padding: 16px; }
+            #activityMap { height: 410px; }
+
+            .table-controls .filter,
+            #tableSearch {
+                min-width: 100%;
+            }
+
+            #exportButton {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+<div class="container">
+
+    <header>
+        <div class="brand">
+            <img
+                src="{{ url_for('static', filename='LOGO.png') }}"
+                alt="TerraMind AI Logo"
+                class="brand-logo"
+            >
+
+            <div>
+                <h1>TerraMind AI</h1>
+                <p class="subtitle">
+                    Historical Wildfire Activity Intelligence
+                </p>
+            </div>
+        </div>
+
+        <div class="muted">
+            NASA FIRMS · VIIRS Satellite Data
+        </div>
+    </header>
+
+    <nav aria-label="Main navigation">
+        <a href="/">▦ Overview</a>
+        <a href="/clustering">✣ AI Clustering</a>
+        <a href="/activity">⏲ Historical Activity</a>
+         <a href="/classifier">֍AI Classifier</a>
+</nav>
+    </nav>
+
+    {% if data_error %}
+    <section class="panel">
+        <h2 class="error">Dataset loading error</h2>
+        <p class="status">{{ data_error }}</p>
+    </section>
+    {% else %}
+
+    <section class="panel">
+        <h2>Activity analysis filters</h2>
+        <p class="description">
+            Filter satellite observations to rank geographic cells by
+            historical detection frequency and mean Fire Radiative Power.
+        </p>
+
+        <div class="filters">
+            <div class="filter">
+                <label for="startDate">Start date</label>
+                <input id="startDate" type="date"
+                       value="{{ min_date }}"
+                       min="{{ min_date }}" max="{{ max_date }}">
+            </div>
+
+            <div class="filter">
+                <label for="endDate">End date</label>
+                <input id="endDate" type="date"
+                       value="{{ max_date }}"
+                       min="{{ min_date }}" max="{{ max_date }}">
+            </div>
+
+            <div class="filter">
+                <label for="confidence">Confidence</label>
+                <select id="confidence">
+                    <option value="all">All levels</option>
+                    <option value="h">High</option>
+                    <option value="n">Nominal</option>
+                    <option value="l">Low</option>
+                </select>
+            </div>
+
+            <div class="filter">
+                <label for="daynight">Observation time</label>
+                <select id="daynight">
+                    <option value="all">Day and night</option>
+                    <option value="D">Day</option>
+                    <option value="N">Night</option>
+                </select>
+            </div>
+
+            <div class="filter">
+                <label for="source">Dataset source</label>
+                <select id="source">
+                    <option value="all">All data</option>
+                    <option value="archive">Archive</option>
+                    <option value="nrt">Near-real-time</option>
+                </select>
+            </div>
+
+            <button id="applyButton" type="button">Apply filters</button>
+            <button id="resetButton" type="button" class="secondary">
+                Reset
+            </button>
+        </div>
+
+        <p class="status" id="status" role="status" aria-live="polite">
+            Loading activity data...
+        </p>
+    </section>
+
+    <section class="cards">
+        <article class="card">
+            <div class="metric-label">Filtered satellite detections</div>
+            <div class="metric-value blue" id="totalDetections">—</div>
+        </article>
+
+        <article class="card">
+            <div class="metric-label">Grid cells returned</div>
+            <div class="metric-value" id="cellCount">—</div>
+        </article>
+
+        <article class="card">
+            <div class="metric-label">High activity cells</div>
+            <div class="metric-value red" id="highCount">—</div>
+        </article>
+
+        <article class="card">
+            <div class="metric-label">Highest activity score</div>
+            <div class="metric-value orange" id="topScore">—</div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <h2>India historical activity map</h2>
+        <p class="description">
+            Each marker represents a 0.25-degree geographic grid cell.
+            Larger scores indicate more activity relative to the selected data.
+            Click a marker for its statistics.
+        </p>
+
+        <div class="legend">
+            <div><span style="background:#22c55e"></span>Low: score below 35</div>
+            <div><span style="background:#f97316"></span>Moderate: 35–69.99</div>
+            <div><span style="background:#ef4444"></span>High: 70–100</div>
+        </div>
+
+        <div id="activityMap" aria-label="Historical fire activity map"></div>
+        <p class="status" id="mapStatus">Preparing map...</p>
+    </section>
+
+    <section class="panel">
+        <h2>Most active grid cells</h2>
+        <p class="description">
+            Ranked by the historical activity score. Select a row to locate
+            that cell on the map.
+        </p>
+
+        <div class="filters table-controls">
+            <div class="filter">
+                <label for="tableSearch">Search latitude or longitude</label>
+                <input
+                    id="tableSearch"
+                    type="search"
+                    placeholder="e.g. 25.0000 or 93.5000"
+                >
+            </div>
+
+            <div class="filter">
+                <label for="sortBy">Sort results by</label>
+                <select id="sortBy">
+                    <option value="score">Activity score — highest first</option>
+                    <option value="detections">Detections — highest first</option>
+                    <option value="mean_frp">Mean FRP — highest first</option>
+                    <option value="max_frp">Maximum FRP — highest first</option>
+                    <option value="confidence_pct">High-confidence percentage — highest first</option>
+                    <option value="latest_detection">Latest detection — newest first</option>
+                </select>
+            </div>
+
+            <button id="exportButton" type="button" class="secondary">
+                Export CSV
+            </button>
+        </div>
+
+        <p class="status" id="tableStatus" role="status" aria-live="polite">
+            Showing the top 100 results.
+        </p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Activity level</th>
+                    <th>Score / 100</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Detections</th>
+                    <th>Mean FRP</th>
+                    <th>Max FRP</th>
+                    <th>High confidence</th>
+                    <th>Latest detection</th>
+                </tr>
+                </thead>
+                <tbody id="activityTable">
+                <tr><td colspan="10">Loading activity data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="status">
+            The API returns at most 1,000 cells, ranked by score.
+        </p>
+    </section>
+
+    <footer class="footer">
+        <strong>Score methodology:</strong>
+        50% percentile-scaled detection frequency +
+        30% percentile-scaled mean FRP +
+        20% high-confidence detection percentage.<br>
+        <strong>Important limitation:</strong> This is a relative historical
+        activity score, not a validated wildfire probability or future-risk
+        prediction. Results depend on the selected date range and filters.
+        Satellite detections do not necessarily represent unique confirmed
+        wildfire incidents.<br>
+        Data: NASA FIRMS Suomi-NPP VIIRS active-fire detections.
+        Map tiles © OpenStreetMap contributors.
+    </footer>
+
+    {% endif %}
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+"use strict";
+
+const DATA_ERROR = {{ data_error | tojson }};
+const MIN_DATE = {{ min_date | tojson }};
+const MAX_DATE = {{ max_date | tojson }};
+
+const $ = (id) => document.getElementById(id);
+
+let map = null;
+let markerLayer = null;
+let loading = false;
+let currentCells = [];
+
+function number(value) {
+    return Number(value || 0).toLocaleString("en-IN");
+}
+
+function safe(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[char]);
+}
+
+function dateFormat(value) {
+    if (!value) return "—";
+    return new Date(value + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+function colorFor(level) {
+    if (level === "High") return "#ef4444";
+    if (level === "Moderate") return "#f97316";
+    return "#22c55e";
+}
+
+function initializeMap() {
+    if (map) return;
+
+    if (typeof L === "undefined") {
+        throw new Error("Leaflet did not load. Check your internet connection.");
+    }
+
+    map = L.map("activityMap").setView([22.5, 79], 4);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    markerLayer = L.layerGroup().addTo(map);
+}
+
+function buildQuery() {
+    const start = $("startDate").value;
+    const end = $("endDate").value;
+
+    if (start && end && start > end) {
+        throw new Error("Start date cannot be later than end date.");
+    }
+
+    const params = new URLSearchParams({
+        confidence: $("confidence").value,
+        daynight: $("daynight").value,
+        source: $("source").value
+    });
+
+    if (start) params.set("start", start);
+    if (end) params.set("end", end);
+
+    return params;
+}
+
+async function fetchActivity() {
+    const params = buildQuery();
+    const response = await fetch(`/api/activity?${params.toString()}`);
+
+    if (!response.ok) {
+        let message = `Request failed: HTTP ${response.status}`;
+
+        try {
+            const body = await response.json();
+            if (body.error) message = body.error;
+        } catch (_) {}
+
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+function renderPopup(cell) {
+    return `
+        <div style="font-weight:700;color:${colorFor(cell.activity_level)}">
+            ${safe(cell.activity_level)} Historical Activity
+        </div>
+        <div><b>Score:</b> ${Number(cell.activity_score).toFixed(2)} / 100</div>
+        <div><b>Frequency contribution:</b> ${Number(cell.frequency_score || 0).toFixed(2)} / 100</div>
+        <div><b>Mean FRP contribution:</b> ${Number(cell.frp_score || 0).toFixed(2)} / 100</div>
+        <div><b>Confidence contribution:</b> ${Number(cell.confidence_score || 0).toFixed(2)} / 100</div>
+        <div><b>High-confidence percentage:</b> ${Number(cell.confidence_pct || 0).toFixed(2)}%</div>
+        <div><b>Latitude:</b> ${Number(cell.lat).toFixed(4)}</div>
+        <div><b>Longitude:</b> ${Number(cell.lon).toFixed(4)}</div>
+        <div><b>Detections:</b> ${number(cell.detections)}</div>
+        <div><b>Mean FRP:</b> ${Number(cell.mean_frp).toFixed(2)} MW</div>
+        <div><b>Maximum FRP:</b> ${Number(cell.max_frp).toFixed(2)} MW</div>
+        <div><b>High-confidence detections:</b> ${number(cell.high_confidence)}</div>
+        <div><b>Latest detection:</b> ${safe(dateFormat(cell.latest_detection))}</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px">
+            Relative historical activity; not a future-risk prediction.
+        </div>
+    `;
+}
+
+function renderMap(cells) {
+    initializeMap();
+    markerLayer.clearLayers();
+
+    for (const cell of cells) {
+        const color = colorFor(cell.activity_level);
+
+        const radius = Math.max(
+            4,
+            Math.min(13, 4 + Math.log2(Number(cell.detections) + 1))
+        );
+
+        L.circleMarker([cell.lat, cell.lon], {
+            radius,
+            color,
+            fillColor: color,
+            fillOpacity: 0.78,
+            weight: 1
+        })
+        .bindPopup(renderPopup(cell))
+        .addTo(markerLayer);
+    }
+
+    if (cells.length) {
+        map.fitBounds(
+            cells.map(cell => [cell.lat, cell.lon]),
+            { padding: [20, 20], maxZoom: 6 }
+        );
+    } else {
+        map.setView([22.5, 79], 4);
+    }
+
+    $("mapStatus").textContent =
+        `${number(cells.length)} historical activity cells displayed.`;
+
+    setTimeout(() => map.invalidateSize(), 100);
+}
+
+function renderTable(cells) {
+    const tbody = $("activityTable");
+    tbody.replaceChildren();
+
+    const searchTerm = $("tableSearch").value.trim().toLowerCase();
+    const sortBy = $("sortBy").value;
+
+    const sortedCells = [...cells].sort((a, b) => {
+        if (sortBy === "latest_detection") {
+            return String(b.latest_detection || "")
+                .localeCompare(String(a.latest_detection || ""));
+        }
+
+        const fieldMap = {
+            score: "activity_score",
+            detections: "detections",
+            mean_frp: "mean_frp",
+            max_frp: "max_frp",
+            confidence_pct: "confidence_pct"
+        };
+
+        const field = fieldMap[sortBy] || "activity_score";
+        return Number(b[field] || 0) - Number(a[field] || 0);
+    });
+
+    const filteredCells = sortedCells.filter(cell => {
+        const searchableText = [
+            cell.lat,
+            cell.lon,
+            cell.activity_level,
+            cell.activity_score,
+            cell.detections
+        ].join(" ").toLowerCase();
+
+        return searchableText.includes(searchTerm);
+    });
+
+    const visibleCells = filteredCells.slice(0, 100);
+
+    $("tableStatus").textContent =
+        `Found ${number(filteredCells.length)} matching cells. ` +
+        `Showing ${number(visibleCells.length)} rows (maximum 100).`;
+
+    if (!visibleCells.length) {
+        tbody.innerHTML =
+            '<tr><td colspan="10">No matching activity cells found.</td></tr>';
+        return;
+    }
+
+    visibleCells.forEach((cell, index) => {
+        const row = document.createElement("tr");
+        row.style.cursor = "pointer";
+        row.title = "Click to locate this cell on the map";
+
+        const levelClass = cell.activity_level === "High"
+            ? "level-high"
+            : cell.activity_level === "Moderate"
+                ? "level-moderate"
+                : "level-low";
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><span class="level ${levelClass}">${safe(cell.activity_level)}</span></td>
+            <td>${Number(cell.activity_score).toFixed(2)}</td>
+            <td>${Number(cell.lat).toFixed(4)}</td>
+            <td>${Number(cell.lon).toFixed(4)}</td>
+            <td>${number(cell.detections)}</td>
+            <td>${Number(cell.mean_frp).toFixed(2)} MW</td>
+            <td>${Number(cell.max_frp).toFixed(2)} MW</td>
+            <td>${number(cell.high_confidence)}</td>
+            <td>${safe(dateFormat(cell.latest_detection))}</td>
+        `;
+
+        row.addEventListener("click", () => {
+            map.setView([cell.lat, cell.lon], 7);
+
+            markerLayer.eachLayer(marker => {
+                const position = marker.getLatLng();
+
+                if (
+                    Math.abs(position.lat - cell.lat) < 0.00001 &&
+                    Math.abs(position.lng - cell.lon) < 0.00001
+                ) {
+                    marker.openPopup();
+                }
+            });
+
+            $("activityMap").scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        });
+
+        tbody.appendChild(row);
+    });
+}
+
+function updateCards(data, cells) {
+    $("totalDetections").textContent = number(data.total_detections);
+    $("cellCount").textContent = number(data.cells_returned);
+
+    $("highCount").textContent = number(
+        data.high_activity_cells ??
+        cells.filter(cell => cell.activity_level === "High").length
+    );
+
+    $("topScore").textContent = cells.length
+        ? `${Math.max(...cells.map(cell => Number(cell.activity_score) || 0)).toFixed(2)} / 100`
+        : "0 / 100";
+}
+
+function exportActivityCSV() {
+    if (!currentCells.length) {
+        $("tableStatus").textContent = "No data available to export.";
+        return;
+    }
+
+    const columns = [
+        ["activity_level", "Activity Level"],
+        ["activity_score", "Activity Score"],
+        ["lat", "Latitude"],
+        ["lon", "Longitude"],
+        ["detections", "Detections"],
+        ["mean_frp", "Mean FRP (MW)"],
+        ["max_frp", "Maximum FRP (MW)"],
+        ["high_confidence", "High Confidence Detections"],
+        ["confidence_pct", "High Confidence Percentage"],
+        ["frequency_score", "Frequency Component Score"],
+        ["frp_score", "Mean FRP Component Score"],
+        ["confidence_score", "Confidence Component Score"],
+        ["latest_detection", "Latest Detection"]
+    ];
+
+    const escapeCSV = value => {
+        const text = String(value ?? "");
+        return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const lines = [
+        columns.map(([, label]) => escapeCSV(label)).join(","),
+        ...currentCells.map(cell =>
+            columns.map(([key]) => escapeCSV(cell[key])).join(",")
+        )
+    ];
+
+    const blob = new Blob(
+        ["\uFEFF" + lines.join("\r\n")],
+        { type: "text/csv;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "terramind_historical_activity.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    $("tableStatus").textContent =
+        `Exported ${number(currentCells.length)} activity cells to CSV.`;
+}
+
+async function loadActivity() {
+    if (loading) return;
+
+    loading = true;
+    $("applyButton").disabled = true;
+    $("applyButton").textContent = "Loading...";
+    $("status").classList.remove("error");
+    $("status").textContent = "Calculating historical activity scores...";
+
+    try {
+        const data = await fetchActivity();
+        currentCells = data.activity_cells || [];
+
+        updateCards(data, currentCells);
+        renderMap(currentCells);
+        renderTable(currentCells);
+
+        $("status").textContent =
+            `Analysis complete. ${number(data.total_detections)} detections analysed; ` +
+            `${number(data.cells_returned)} highest-ranked cells returned. ` +
+            `Showing the top ${Math.min(100, currentCells.length)} in the table.`;
+    } catch (error) {
+        console.error(error);
+        $("status").textContent = `Error: ${error.message}`;
+        $("status").classList.add("error");
+        $("mapStatus").textContent = "Could not update the activity map.";
+    } finally {
+        loading = false;
+        $("applyButton").disabled = false;
+        $("applyButton").textContent = "Apply filters";
+    }
+}
+
+function resetFilters() {
+    $("startDate").value = MIN_DATE;
+    $("endDate").value = MAX_DATE;
+    $("confidence").value = "all";
+    $("daynight").value = "all";
+    $("source").value = "all";
+    $("tableSearch").value = "";
+    $("sortBy").value = "score";
+    loadActivity();
+}
+
+if (!DATA_ERROR) {
+    $("applyButton").addEventListener("click", loadActivity);
+    $("resetButton").addEventListener("click", resetFilters);
+
+    $("confidence").addEventListener("change", loadActivity);
+    $("daynight").addEventListener("change", loadActivity);
+    $("source").addEventListener("change", loadActivity);
+    $("startDate").addEventListener("change", loadActivity);
+    $("endDate").addEventListener("change", loadActivity);
+
+    $("tableSearch").addEventListener("input", () => {
+        renderTable(currentCells);
+    });
+
+    $("sortBy").addEventListener("change", () => {
+        renderTable(currentCells);
+    });
+
+    $("exportButton").addEventListener("click", exportActivityCSV);
+
+    loadActivity();
+}
+</script>
+</body>
+</html>

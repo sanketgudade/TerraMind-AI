@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TerraMind AI | AI Clustering</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{--bg:#0b1220;--panel:#151f30;--border:#29364a;--text:#e5e7eb;--muted:#9ca3af;--orange:#f97316;--green:#4ade80;--red:#f87171;--blue:#60a5fa}
+    *{box-sizing:border-box}body{margin:0;padding:28px;font-family:Inter,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select{font:inherit}.container{max-width:1500px;margin:auto}
+    
+.brand-icon {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+    .header{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+    .brand{display:flex;align-items:center;gap:13px}.brand-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:#3b2115;font-size:28px}
+    h1{font-size:clamp(25px,4vw,36px);margin:0;letter-spacing:-.8px}.subtitle{margin:7px 0 0;color:var(--muted);line-height:1.6}
+    .status-pill{border:1px solid var(--border);background:var(--panel);padding:10px 14px;border-radius:30px;color:var(--green);font-size:13px}
+    .main-nav{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+    .main-nav a{display:inline-flex;gap:8px;padding:11px 16px;color:var(--muted);text-decoration:none;border-radius:8px;font-size:14px;font-weight:600}
+    .main-nav a:hover,.main-nav a.active{color:#fff;background:#3b2115}
+    .hero{padding:26px;background:linear-gradient(120deg,#1c293d,#151f30 65%,#352116);border:1px solid var(--border);border-radius:18px;margin-bottom:20px}
+    .eyebrow{color:#fb923c;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1.7px}.hero h2{font-size:clamp(23px,3vw,32px);margin:10px 0}.hero p{max-width:850px;color:#cbd5e1;line-height:1.75;margin:0}
+    .panel{margin-top:20px;padding:22px;background:var(--panel);border:1px solid var(--border);border-radius:15px;min-width:0}
+    .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:18px}h3{font-size:18px;margin:0} .description{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.7}
+    .filters{display:flex;flex-wrap:wrap;gap:13px;align-items:end}.filter{display:flex;flex-direction:column;gap:7px;min-width:140px;flex:1}.filter label{font-size:12px;color:var(--muted)}
+    select,input[type=date]{width:100%;background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;outline:none}
+    .button{border:0;padding:12px 17px;border-radius:8px;background:var(--orange);color:white;font-weight:700;cursor:pointer}.button:disabled{opacity:.6;cursor:wait}.secondary{background:#26364d}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;min-width:0}
+    .metric-label{color:var(--muted);font-size:13px;line-height:1.5}.metric-value{font-size:clamp(24px,3vw,34px);font-weight:750;letter-spacing:-.7px;margin-top:12px;overflow-wrap:anywhere}.metric-note{color:var(--muted);font-size:12px;margin-top:8px}
+    .orange{color:#fb923c}.red{color:#f87171}.blue{color:#60a5fa}.green{color:#4ade80}
+    #clusterMap{height:570px;width:100%;border-radius:12px;background:#0b1220;z-index:1}
+    .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px;color:var(--muted);font-size:12px}.legend span{display:inline-flex;align-items:center;gap:7px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+    .status{font-size:13px;color:var(--muted);line-height:1.7;margin:14px 0 0}.error{color:var(--red)}
+    .warning{margin-top:14px;padding:13px 15px;border:1px solid #854d0e;background:#291d12;color:#fed7aa;border-radius:9px;font-size:13px;line-height:1.7}
+    .explain-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.explain-card{border:1px solid var(--border);background:#101a2a;border-radius:12px;padding:17px}.explain-card h4{margin:0 0 9px;font-size:15px}.explain-card p{margin:0;color:#cbd5e1;font-size:13px;line-height:1.7}
+    .algorithm{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:15px}.step{background:#202d42;border:1px solid #34445d;padding:10px 13px;border-radius:9px;font-size:12px}.arrow{color:var(--orange);font-weight:800}
+    .footer{margin-top:25px;padding:20px 0 5px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.8}
+    .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#151f30;color:#e5e7eb}.leaflet-popup-content{line-height:1.8}.popup-title{font-weight:700;color:#fb923c}
+    @media(max-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.explain-grid{grid-template-columns:1fr}}
+    @media(max-width:600px){body{padding:15px}.cards{grid-template-columns:1fr}.panel,.hero{padding:16px}#clusterMap{height:430px}.filter{min-width:125px}}
+  </style>
+</head>
+<body>
+<div class="container">
+  
+<header class="header">
+    <div class="brand">
+        <img
+            src="{{ url_for('static', filename='LOGO.png') }}"
+            alt="TerraMind AI Logo"
+            class="brand-icon"
+        >
+
+        <div>
+            <h1>TerraMind AI</h1>
+            <p class="subtitle">
+                Wildfire Intelligence &amp; Satellite Fire Detection
+            </p>
+        </div>
+    </div>
+
+    <div class="status-pill">● DBSCAN clustering module</div>
+</header>
+
+  <nav class="main-nav" aria-label="Main navigation">
+    <a href="/">▦ Overview</a>
+        <a href="/clustering">✣ AI Clustering</a>
+        <a href="/activity">⏲ Historical Activity</a>
+         <a href="/classifier">֍AI Classifier</a>
+  </nav>
+
+  <section class="hero">
+    <div class="eyebrow">Spatial intelligence module</div>
+    <h2>AI-Powered Hotspot Clustering</h2>
+    <p>Explore spatially concentrated satellite fire detections with DBSCAN (Density-Based Spatial Clustering of Applications with Noise). Filter the observations, inspect cluster centers, and review the density-based groups detected by the model.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header"><div><h3>Clustering controls</h3><p class="description">Choose the same filters used on the Overview page, then run the clustering analysis.</p></div><button id="resetButton" class="button secondary" type="button">Reset filters</button></div>
+    <div class="filters">
+      <div class="filter"><label for="startDate">Start date</label><input id="startDate" type="date" value="{{ min_date }}" min="{{ min_date }}" max="{{ max_date }}"></div>
+      <div class="filter"><label for="endDate">End date</label><input id="endDate" type="date" value="{{ max_date }}" min="{{ min_date }}" max="{{ max_date }}"></div>
+      <div class="filter"><label for="confidence">Confidence</label><select id="confidence"><option value="all">All confidence levels</option><option value="h">High</option><option value="n">Nominal</option><option value="l">Low</option></select></div>
+      <div class="filter"><label for="daynight">Observation time</label><select id="daynight"><option value="all">Day and night</option><option value="D">Day</option><option value="N">Night</option></select></div>
+      <div class="filter"><label for="source">Dataset source</label><select id="source"><option value="all">All data</option><option value="archive">Archive</option><option value="nrt">Near-real-time</option></select></div>
+      <button id="runButton" class="button" type="button">Run clustering</button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite">Ready to analyze the selected satellite detections.</p>
+  </section>
+
+  <section style="margin-top:24px">
+    <div class="cards">
+      <article class="card"><div class="metric-label">Spatial clusters found</div><div id="clusterCount" class="metric-value orange">—</div><div class="metric-note">DBSCAN groups in the sampled observations</div></article>
+      <article class="card"><div class="metric-label">Detections analyzed</div><div id="sampleCount" class="metric-value blue">—</div><div class="metric-note" id="totalNote">Sample used by clustering</div></article>
+      <article class="card"><div class="metric-label">Noise points</div><div id="noiseCount" class="metric-value red">—</div><div class="metric-note">Sampled points not assigned to a cluster</div></article>
+      <article class="card"><div class="metric-label">Clustering settings</div><div id="settings" class="metric-value green" style="font-size:25px">—</div><div class="metric-note">Neighborhood radius · minimum points</div></article>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header"><div><h3>India cluster map</h3><p class="description">Each circle marks the center of a spatial cluster. Larger circles represent more detections in the clustering sample. Circle color represents cluster size category, not wildfire risk. Select a circle for details.</p></div></div>
+    <div id="clusterMap" aria-label="Interactive DBSCAN cluster map"></div>
+    <div class="legend">
+      <span><i style="background:#22c55e"></i>Small cluster: fewer than 30 detections</span>
+      <span><i style="background:#f97316"></i>Medium cluster: 30–99 detections</span>
+      <span><i style="background:#ef4444"></i>Large cluster: 100+ detections</span>
+      <span><i style="background:#9ca3af"></i>Noise detections (gray)</span>
+    </div>
+    <p id="mapStatus" class="status">Map will update when clustering finishes.</p>
+    <div class="warning">
+      <strong>Important interpretation:</strong>
+      Green, orange, and red indicate the relative number of detections in each cluster.
+      They do not represent low, medium, or high wildfire risk.
+      Gray markers represent sampled detections classified as DBSCAN noise;
+      noise does not mean a false detection or a fire-free location.
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header"><div><h3>How the AI clustering works</h3><p class="description">A viva-friendly explanation of the algorithm and the current parameters.</p></div></div>
+    <div class="explain-grid">
+      <article class="explain-card"><h4>01 · Density-based grouping</h4><p>DBSCAN groups points that are geographically close and sufficiently dense. It does not require the number of clusters to be specified in advance.</p></article>
+      <article class="explain-card"><h4>02 · Neighborhood radius (eps)</h4><p>The backend currently uses a 5 km neighborhood radius. The geographic coordinates are converted to radians so DBSCAN can use the haversine distance metric.</p></article>
+      <article class="explain-card"><h4>03 · Minimum samples</h4><p>The backend uses at least 10 points in a neighborhood to identify a core point. Other points may join a cluster as border points. Points that do not join any cluster are labelled as noise.</p></article>
+    </div>
+    <div class="algorithm" aria-label="Clustering process">
+      <span class="step">Satellite detections</span><span class="arrow">→</span><span class="step">Apply filters</span><span class="arrow">→</span><span class="step">DBSCAN</span><span class="arrow">→</span><span class="step">Cluster centers on map</span>
+    </div>
+    <p class="status">Scientific note: these are clusters of sampled satellite detection records across the selected time range. They are not confirmed wildfire boundaries, unique incident counts, or predictions of future fire risk. A cluster can combine detections from different dates because the current model clusters spatially, not temporally.</p>
+  </section>
+
+  <footer class="footer"><strong>Data source:</strong> NASA FIRMS Suomi-NPP VIIRS active-fire detections, Collection 2.<br>Leaflet map tiles © OpenStreetMap contributors. Internet access is required for the map tiles and Leaflet CDN.</footer>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let map = null;
+let clusterLayer = null;
+let noiseLayer = null;
+let busy = false;
+
+function fmt(value) { return Number(value || 0).toLocaleString("en-IN"); }
+
+function initMap() {
+  if (map) return;
+  if (typeof L === "undefined") throw new Error("Leaflet did not load. Check internet/CDN access.");
+  map = L.map("clusterMap").setView([22.5, 79], 4);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors", maxZoom: 18
+  }).addTo(map);
+  clusterLayer = L.layerGroup().addTo(map);
+  noiseLayer = L.layerGroup().addTo(map);
+}
+
+function makeParams() {
+  const start = $("startDate").value, end = $("endDate").value;
+  if (start && end && start > end) throw new Error("Start date cannot be later than end date.");
+  const p = new URLSearchParams({
+    confidence: $("confidence").value,
+    daynight: $("daynight").value,
+    source: $("source").value
+  });
+  if (start) p.set("start", start);
+  if (end) p.set("end", end);
+  return p;
+}
+
+/*
+ * Cluster color indicates the number of detections in the cluster.
+ * It does NOT indicate wildfire risk or severity.
+ */
+function getClusterColor(count) {
+  if (count >= 100) return "#ef4444";
+  if (count >= 30) return "#f97316";
+  return "#22c55e";
+}
+
+function getClusterLabel(count) {
+  if (count >= 100) return "Large cluster";
+  if (count >= 30) return "Medium cluster";
+  return "Small cluster";
+}
+
+function renderClusters(data) {
+  initMap();
+  clusterLayer.clearLayers();
+  noiseLayer.clearLayers();
+
+  const clusters = data.clusters || [];
+  const bounds = [];
+
+  // Draw DBSCAN cluster centers.
+  for (const c of clusters) {
+    const count = Number(c.detections_in_sample || 0);
+    const color = getClusterColor(count);
+    const radius = Math.max(5, Math.min(20, 5 + Math.log2(count + 1) * 1.6));
+
+    const marker = L.circleMarker([c.center_lat, c.center_lon], {
+      radius, color, fillColor: color, fillOpacity: 0.82, weight: 1.5
+    });
+
+    const popup = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "popup-title";
+    title.textContent = `DBSCAN Cluster ${c.cluster_id}`;
+    popup.appendChild(title);
+
+    const rows = [
+      ["Sampled detections", fmt(count)],
+      ["Center latitude", Number(c.center_lat).toFixed(5)],
+      ["Center longitude", Number(c.center_lon).toFixed(5)],
+      ["Mean FRP", `${Number(c.mean_frp || 0).toFixed(2)} MW`],
+      ["High-confidence detections", fmt(c.high_confidence_detections || 0)],
+      ["Color category", getClusterLabel(count)],
+      ["Wildfire risk", "Not determined by DBSCAN color"]
+    ];
+
+    for (const [label, value] of rows) {
+      const row = document.createElement("div");
+      row.textContent = `${label}: ${value}`;
+      popup.appendChild(row);
+    }
+
+    marker.bindPopup(popup);
+    marker.addTo(clusterLayer);
+    bounds.push([c.center_lat, c.center_lon]);
+  }
+
+  /*
+   * Draw individual noise detections in gray when the API returns them.
+   * The backend may return only a limited subset of all noise points.
+   */
+  const noiseDetections = data.noise_detections || [];
+
+  for (const point of noiseDetections) {
+    const lat = Number(point.latitude);
+    const lon = Number(point.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+    const marker = L.circleMarker([lat, lon], {
+      radius: 3,
+      color: "#9ca3af",
+      fillColor: "#9ca3af",
+      fillOpacity: 0.65,
+      weight: 1
+    });
+
+    const popup = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "popup-title";
+    title.textContent = "DBSCAN Noise Detection";
+    popup.appendChild(title);
+
+    const rows = [
+      ["Latitude", lat.toFixed(5)],
+      ["Longitude", lon.toFixed(5)],
+      ["Confidence", point.confidence ?? "Unknown"],
+      ["FRP", `${Number(point.frp || 0).toFixed(2)} MW`],
+      ["Date", point.date ?? "Unknown"],
+      ["Interpretation", "Not assigned to a density cluster"]
+    ];
+
+    for (const [label, value] of rows) {
+      const row = document.createElement("div");
+      row.textContent = `${label}: ${value}`;
+      popup.appendChild(row);
+    }
+
+    marker.bindPopup(popup);
+    marker.addTo(noiseLayer);
+  }
+
+  if (bounds.length) map.fitBounds(bounds, {padding:[24,24], maxZoom:7});
+  else map.setView([22.5,79],4);
+
+  const returnedNoise = noiseDetections.length;
+  const totalNoise = Number(data.noise_points || 0);
+
+  $("mapStatus").textContent =
+    `${fmt(clusters.length)} clusters displayed. ` +
+    `${fmt(returnedNoise)} of ${fmt(totalNoise)} noise detections ` +
+    "returned by the API are shown in gray. Cluster colors indicate size, not fire risk.";
+
+  $("clusterCount").textContent = fmt(data.cluster_count);
+  $("sampleCount").textContent = fmt(data.sampled_detections);
+  $("totalNote").textContent = `${fmt(data.total_filtered_detections)} detections match filters`;
+  $("noiseCount").textContent = fmt(totalNoise);
+
+  const p = data.parameters || {};
+  $("settings").textContent = `${p.radius_km ?? "—"} km / ${p.min_samples ?? "—"} pts`;
+
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+async function runClustering() {
+  if (busy) return;
+  busy = true;
+
+  const button = $("runButton");
+  button.disabled = true;
+  button.textContent = "Analyzing…";
+
+  $("status").classList.remove("error");
+  $("mapStatus").classList.remove("error");
+  $("status").textContent = "Running DBSCAN on the filtered satellite detections. This may take a little time…";
+  $("mapStatus").textContent = "Loading cluster map…";
+
+  try {
+    const params = makeParams();
+    const response = await fetch(`/api/clusters?${params.toString()}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `Request failed with HTTP ${response.status}`);
+
+    renderClusters(data);
+
+    $("status").textContent =
+      `Analysis complete: ${fmt(data.cluster_count)} spatial clusters found from ` +
+      `${fmt(data.sampled_detections)} sampled detections. ` +
+      "Colors represent cluster size, not fire risk.";
+  } catch (err) {
+    console.error("Clustering error:", err);
+    $("status").textContent = `Could not load clusters: ${err.message}`;
+    $("status").classList.add("error");
+    $("mapStatus").textContent = "Cluster map could not be updated.";
+    $("mapStatus").classList.add("error");
+  } finally {
+    busy = false;
+    button.disabled = false;
+    button.textContent = "Run clustering";
+  }
+}
+
+function resetFilters() {
+  $("startDate").value = {{ min_date | tojson }};
+  $("endDate").value = {{ max_date | tojson }};
+  $("confidence").value = "all";
+  $("daynight").value = "all";
+  $("source").value = "all";
+  runClustering();
+}
+
+$("runButton").addEventListener("click", runClustering);
+$("resetButton").addEventListener("click", resetFilters);
+$("confidence").addEventListener("change", runClustering);
+$("daynight").addEventListener("change", runClustering);
+$("source").addEventListener("change", runClustering);
+$("startDate").addEventListener("change", runClustering);
+$("endDate").addEventListener("change", runClustering);
+runClustering();
+</script>
+</body>
+</html>

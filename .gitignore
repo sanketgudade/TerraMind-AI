@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Unrelated local PowerShell files
+powershell.exe
+powershell.bat
+powershell.cmd
+
+# Avoid committing duplicate copies of the NASA FIRMS datasets
+data/raw/firms/*.csv
