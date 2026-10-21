@@ -1,4 +1,4 @@
-# TerraMind AI
+#  TerraMind AI
 ### Wildfire Intelligence & Satellite Fire Detection Platform
 
 **Transforming satellite observations into actionable geospatial wildfire intelligence.**
@@ -7,9 +7,7 @@ TerraMind AI is a geospatial artificial intelligence platform designed to proces
 
 The platform is designed to help users explore fire activity patterns, identify spatially concentrated detections, prioritize historically active geographical regions, and screen observed fire detections for high Fire Radiative Power (FRP).
 
-<p align="center">
-  <img src="LOGO.png" alt="TerraMind AI Logo" width="180"/>
-</p>
+
 
 <p align="center">
   <strong>Satellite Data • Geospatial Analytics • Machine Learning • Wildfire Intelligence</strong>
